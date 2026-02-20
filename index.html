@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🔥 TrendPulse — Falling Keywords</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0a1a;
+      --bg-secondary: #111128;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --text-muted: #55556a;
+      --accent-1: #ff6b6b;
+      --accent-2: #feca57;
+      --accent-3: #48dbfb;
+      --accent-4: #ff9ff3;
+      --success: #00d2a0;
+      --danger: #ff4757;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── Animated background ── */
+    .bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.25;
+      animation: orbFloat 20s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 600px; height: 600px; background: #6c5ce7; top: -15%; left: -10%; animation-duration: 25s; }
+    .orb-2 { width: 500px; height: 500px; background: #e17055; bottom: -10%; right: -10%; animation-duration: 30s; animation-delay: -5s; }
+    .orb-3 { width: 400px; height: 400px; background: #00cec9; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 22s; animation-delay: -10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+      100% { transform: translate(30px, -10px) scale(1.05); }
+    }
+
+    .noise {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ── Layout ── */
+    .app {
+      position: relative; z-index: 2;
+      max-width: 1100px; margin: 0 auto;
+      padding: 16px 20px 40px;
+      display: flex; flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      display: grid; place-items: center; font-size: 1.1rem;
+      box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+    }
+    .logo span {
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-secondary);
+      font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--border-hover); color: var(--text-primary); }
+    .btn:active { transform: scale(0.96); }
+    .btn.active {
+      background: rgba(72,219,251,0.15); border-color: rgba(72,219,251,0.3); color: var(--accent-3);
+    }
+
+    .select-wrap select {
+      appearance: none; padding: 7px 30px 7px 12px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-primary);
+      font: inherit; font-size: 0.8rem; cursor: pointer; outline: none;
+      transition: all 0.2s;
+    }
+    .select-wrap select:focus { border-color: var(--accent-3); }
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none; font-size: 0.8rem;
+    }
+
+    /* ── Info bar ── */
+    .info-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+    }
+    .info-bar-left {
+      display: flex; align-items: center; gap: 14px;
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .info-bar-left span { display: flex; align-items: center; gap: 4px; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 14px; border-radius: 50px;
+      background: rgba(0,210,160,0.1); border: 1px solid rgba(0,210,160,0.2);
+      font-size: 0.78rem; font-weight: 600; color: var(--success);
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+      animation: pulse-dot 2s ease-in-out infinite;
+      box-shadow: 0 0 6px var(--success);
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
+    /* ── Physics Container ── */
+    .physics-container {
+      flex: 1; min-height: 450px;
+      position: relative; overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px),
+        var(--bg-card);
+      background-size: 40px 40px, 40px 40px, 100% 100%;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: grab;
+    }
+    .physics-container:active { cursor: grabbing; }
+
+    .physics-container.shake-anim {
+      animation: containerShake 0.35s ease;
+    }
+    @keyframes containerShake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-4px) rotate(-0.3deg); }
+      30% { transform: translateX(4px) rotate(0.3deg); }
+      45% { transform: translateX(-3px); }
+      60% { transform: translateX(3px); }
+      75% { transform: translateX(-1px); }
+    }
+
+    .watermark {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      pointer-events: none; z-index: 0;
+      font-size: 1rem; color: rgba(255,255,255,0.04);
+      font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .corner-info {
+      position: absolute; bottom: 12px; right: 14px;
+      font-size: 0.7rem; color: rgba(255,255,255,0.15);
+      pointer-events: none; z-index: 50;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Keyword Pills ── */
+    .keyword-pill {
+      position: absolute;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 20px;
+      font-size: 0.82rem; font-weight: 600;
+      white-space: nowrap;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 10;
+      cursor: pointer;
+      transition: filter 0.15s, box-shadow 0.15s;
+      pointer-events: auto;
+      backface-visibility: hidden;
+      will-change: left, top, transform;
+    }
+
+    .pill-rank {
+      font-size: 0.7rem; font-weight: 800; opacity: 0.7;
+      flex-shrink: 0;
+    }
+    .pill-text {
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .pill-badge { flex-shrink: 0; font-size: 0.75rem; }
+
+    /* Pill color variants */
+    .pill-gold {
+      background: linear-gradient(135deg, rgba(255,215,0,0.22), rgba(255,165,0,0.12));
+      border: 1.5px solid rgba(255,215,0,0.45);
+      color: #ffd700;
+      box-shadow: 0 0 20px rgba(255,215,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .pill-silver {
+      background: linear-gradient(135deg, rgba(200,200,220,0.2), rgba(160,160,180,0.1));
+      border: 1.5px solid rgba(192,192,210,0.35);
+      color: #d4d4e0;
+      box-shadow: 0 0 16px rgba(192,192,192,0.08);
+    }
+    .pill-bronze {
+      background: linear-gradient(135deg, rgba(205,127,50,0.22), rgba(184,115,51,0.1));
+      border: 1.5px solid rgba(205,127,50,0.35);
+      color: #e8a860;
+      box-shadow: 0 0 16px rgba(205,127,50,0.08);
+    }
+    .pill-hot {
+      background: rgba(255,71,87,0.14);
+      border: 1px solid rgba(255,71,87,0.28);
+      color: #ff6b6b;
+    }
+    .pill-rising {
+      background: rgba(254,202,87,0.14);
+      border: 1px solid rgba(254,202,87,0.28);
+      color: #feca57;
+    }
+    .pill-new {
+      background: rgba(72,219,251,0.14);
+      border: 1px solid rgba(72,219,251,0.28);
+      color: #48dbfb;
+    }
+    .pill-steady {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #999;
+    }
+
+    .keyword-pill.dragging {
+      z-index: 100 !important;
+      filter: brightness(1.3);
+      box-shadow: 0 0 30px rgba(255,255,255,0.15) !important;
+    }
+    .keyword-pill.flash {
+      filter: brightness(1.6);
+    }
+
+    /* ── Initial flow layout (before physics) ── */
+    .physics-container.flow-layout {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px 20px;
+    }
+    .physics-container.flow-layout .keyword-pill {
+      position: relative;
+      opacity: 0;
+      animation: pillAppear 0.35s ease forwards;
+    }
+    @keyframes pillAppear {
+      from { opacity: 0; transform: scale(0.8) translateY(-8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ── Loading state ── */
+    .loading-msg {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      color: var(--text-muted); font-size: 0.95rem;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; padding: 20px;
+      color: var(--text-muted); font-size: 0.78rem;
+    }
+    .footer a { color: var(--accent-3); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      padding: 10px 22px; border-radius: 14px;
+      background: var(--bg-secondary); border: 1px solid var(--border-hover);
+      color: var(--text-primary); font-size: 0.85rem; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      z-index: 200; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .app { padding: 10px 10px 30px; }
+      .navbar { gap: 8px; }
+      .logo { font-size: 1.1rem; }
+      .logo-icon { width: 30px; height: 30px; font-size: 0.9rem; }
+      .controls { gap: 4px; }
+      .btn { padding: 6px 10px; font-size: 0.75rem; }
+      .select-wrap select { padding: 6px 24px 6px 10px; font-size: 0.75rem; }
+      .physics-container { min-height: 380px; border-radius: 16px; }
+      .keyword-pill { padding: 6px 12px; font-size: 0.75rem; max-width: 180px; }
+      .info-bar-left { font-size: 0.72rem; }
+    }
+    @media (max-width: 420px) {
+      .controls { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+<div class="noise"></div>
+
+<div class="app">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">
+      <div class="logo-icon">🔥</div>
+      <span>TrendPulse</span>
+    </div>
+    <div class="controls">
+      <div class="select-wrap">
+        <select id="region-select">
+          <option value="united_states">🇺🇸 United States</option>
+          <option value="united_kingdom">🇬🇧 United Kingdom</option>
+          <option value="canada">🇨🇦 Canada</option>
+          <option value="australia">🇦🇺 Australia</option>
+          <option value="india">🇮🇳 India</option>
+          <option value="germany">🇩🇪 Germany</option>
+          <option value="france">🇫🇷 France</option>
+          <option value="japan">🇯🇵 Japan</option>
+          <option value="brazil">🇧🇷 Brazil</option>
+        </select>
+      </div>
+      <button class="btn" id="shake-btn">🎲 Shake</button>
+      <button class="btn" id="gravity-btn">🌍 Gravity</button>
+      <button class="btn" id="refresh-btn">🔄 Drop</button>
+    </div>
+  </nav>
+
+  <!-- Info bar -->
+  <div class="info-bar">
+    <div class="info-bar-left">
+      <span id="keyword-count">15 keywords</span>
+      <span>•</span>
+      <span>Click to search • Drag to play</span>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span id="status-text">Live</span>
+    </div>
+  </div>
+
+  <!-- Physics playground -->
+  <div class="physics-container" id="physics-container">
+    <div class="watermark">drag · click · play</div>
+    <div class="corner-info" id="corner-info"></div>
+    <div class="loading-msg" id="loading-msg">⏳ Loading keywords…</div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Built with Matter.js physics • Data from <a href="https://trends.google.com" target="_blank" rel="noopener">Google Trends</a></p>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Trend keyword data by region ───────────────────────────────────────────
+const REGIONAL_TRENDS = {
+  united_states: [
+    "NBA Playoffs 2025", "iPhone 17 leak", "Yellowstone Season 6", "Social Security update",
+    "Memorial Day sales", "SpaceX Starship launch", "Taylor Swift tour 2025",
+    "ChatGPT new features", "Gas prices today", "Costco gold bars",
+    "Ozempic alternatives", "Summer movie releases", "Student loan forgiveness",
+    "Best air fryer 2025", "Aurora borealis forecast"
+  ],
+  united_kingdom: [
+    "Premier League results", "BBC News live", "Glastonbury 2025 lineup", "Royal Family update",
+    "UK weather forecast", "Love Island 2025", "Energy price cap", "NHS wait times",
+    "Bank holiday dates", "Coronation Street spoilers", "GCSEs 2025",
+    "Best ISA rates", "London Marathon results", "Channel 4 schedule", "Cricket World Cup"
+  ],
+  canada: [
+    "NHL Playoffs 2025", "Canadian election polls", "Tim Hortons menu", "Housing market Canada",
+    "CBC News live", "Trudeau approval rating", "CERB update", "Air Canada deals",
+    "Banff weather", "Canadian dollar forecast", "TFSA limits 2025",
+    "Maple Leafs trade", "Drake new album", "Immigration Canada", "Best poutine Toronto"
+  ],
+  australia: [
+    "AFL scores today", "Australian Open 2025", "Woolworths specials", "Sydney weather",
+    "Housing crisis Australia", "NRL results", "Cost of living update",
+    "Qantas sale", "Great Barrier Reef", "Melbourne Cup 2025",
+    "ATAR results", "Bunnings workshop", "Neighbours reboot", "Ashes cricket", "Budget 2025"
+  ],
+  india: [
+    "IPL 2025 results", "UPSC preparation", "Modi news today", "Bollywood releases",
+    "JEE Main results", "Sensex today", "Indian Railways update", "UPI new features",
+    "Chandrayaan 4", "NEET 2025", "Diwali 2025 date",
+    "Aadhaar update", "Flipkart sale", "T20 World Cup", "Gold price today"
+  ],
+  germany: [
+    "Bundesliga Ergebnisse", "Wetter morgen", "Tagesschau live", "E-Auto Prämie",
+    "Bahnstreik 2025", "Energiepreise aktuell", "Tatort heute", "Inflation Deutschland",
+    "Bayern München Transfer", "Bürgergeld 2025", "Mietpreisbremse",
+    "Deutschlandticket", "ESC 2025", "Rente berechnen", "Steuererklärung Frist"
+  ],
+  france: [
+    "Roland Garros 2025", "Ligue 1 résultats", "Météo Paris", "Macron actualité",
+    "Bac 2025 dates", "Prix carburant", "Tour de France 2025", "Cannes Film Festival",
+    "SNCF grève", "Inflation France", "CAC 40 cours",
+    "Recette du jour", "JO Paris legacy", "Immobilier Paris", "Parcoursup résultats"
+  ],
+  japan: [
+    "大谷翔平 ニュース", "地震速報", "天気予報 東京", "ワンピース最新話",
+    "日経平均株価", "NHK紅白歌合戦", "ポケモン新作", "円安 影響",
+    "プロ野球 結果", "呪術廻戦 最終回", "東京オリンピック レガシー",
+    "新幹線 運行状況", "ユニクロ セール", "ChatGPT 日本語", "桜 開花予想"
+  ],
+  brazil: [
+    "Brasileirão resultados", "BBB 2025", "Bolsa de valores hoje", "Previsão do tempo",
+    "Lula notícias", "Flamengo ao vivo", "Preço gasolina", "Enem 2025",
+    "Dólar hoje", "Receita Federal", "Big Brother Brasil", "Carnaval 2025",
+    "Copa do Brasil", "Netflix lançamentos", "Pix novidades"
+  ]
+};
+
+const BADGE_TYPES = ['hot','rising','new','steady','rising','hot','new','steady','rising','steady','hot','new','rising','steady','new'];
+const BADGE_ICONS = { hot: '🔥', rising: '📈', new: '✨', steady: '' };
+const REGION_LABELS = {
+  united_states:'US', united_kingdom:'UK', canada:'CA', australia:'AU',
+  india:'IN', germany:'DE', france:'FR', japan:'JP', brazil:'BR'
+};
+
+// ─── State ──────────────────────────────────────────────────────────────────
+let engine = null;
+let mouseConstraint = null;
+let wordBodies = [];
+let animFrameId = null;
+let currentRegion = 'united_states';
+let isZeroGravity = false;
+let dragStart = null;
+let wasDragged = false;
+
+const container = document.getElementById('physics-container');
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function getPillClass(rank, badge) {
+  if (rank === 1) return 'pill-gold';
+  if (rank === 2) return 'pill-silver';
+  if (rank === 3) return 'pill-bronze';
+  return `pill-${badge}`;
+}
+
+function searchGoogle(keyword) {
+  window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank', 'noopener');
+}
+
+// ─── Create pill element ────────────────────────────────────────────────────
+function createPillElement(keyword, rank, badge) {
+  const pill = document.createElement('span');
+  pill.className = `keyword-pill ${getPillClass(rank, badge)}`;
+  pill.style.animationDelay = `${(rank - 1) * 0.04}s`;
+  pill.dataset.keyword = keyword;
+
+  const rankSpan = document.createElement('span');
+  rankSpan.className = 'pill-rank';
+  rankSpan.textContent = `#${rank}`;
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'pill-text';
+  textSpan.textContent = keyword;
+
+  pill.appendChild(rankSpan);
+  pill.appendChild(textSpan);
+
+  const icon = BADGE_ICONS[badge];
+  if (icon) {
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'pill-badge';
+    badgeSpan.textContent = icon;
+    pill.appendChild(badgeSpan);
+  }
+
+  return pill;
+}
+
+// ─── Destroy physics ────────────────────────────────────────────────────────
+function destroyPhysics() {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  if (engine) {
+    if (mouseConstraint && mouseConstraint.mouse) {
+      Matter.Mouse.clearSourceEvents(mouseConstraint.mouse);
+    }
+    Matter.World.clear(engine.world);
+    Matter.Engine.clear(engine);
+    engine = null;
+    mouseConstraint = null;
+  }
+  wordBodies = [];
+}
+
+// ─── Init physics ───────────────────────────────────────────────────────────
+function initPhysics(pills, measurements) {
+  const { Engine, World, Bodies, Mouse, MouseConstraint: MC, Body, Events, Query } = Matter;
+
+  const rect = container.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+
+  if (W <= 0 || H <= 0) return;
+
+  engine = Engine.create();
+  engine.world.gravity.y = isZeroGravity ? 0 : 0.56;
+
+  // Walls
+  const wallOpts = { isStatic: true, render: { fillStyle: 'transparent' }, friction: 0.3, restitution: 0.4 };
+  const walls = [
+    Bodies.rectangle(W / 2, H + 25, W + 50, 50, wallOpts),   // floor
+    Bodies.rectangle(-25, H / 2, 50, H + 50, wallOpts),       // left
+    Bodies.rectangle(W + 25, H / 2, 50, H + 50, wallOpts),    // right
+    Bodies.rectangle(W / 2, -25, W + 50, 50, wallOpts)        // ceiling
+  ];
+
+  // Bodies for each pill
+  wordBodies = pills.map((elem, i) => {
+    const m = measurements[i];
+    const body = Bodies.rectangle(m.x, m.y, m.w + 4, m.h + 2, {
+      chamfer: { radius: Math.min(10, m.h / 2) },
+      restitution: 0.65,
+      frictionAir: 0.015,
+      friction: 0.25,
+      density: 0.002,
+      render: { fillStyle: 'transparent' }
+    });
+
+    Body.setVelocity(body, {
+      x: (Math.random() - 0.5) * 4,
+      y: Math.random() * 2
+    });
+    Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.04);
+
+    return { elem, body, keyword: elem.dataset.keyword };
+  });
+
+  // Mouse constraint
+  const mouse = Mouse.create(container);
+  mouseConstraint = MC.create(engine, {
+    mouse,
+    constraint: { stiffness: 0.9, render: { visible: false } }
+  });
+
+  // Drag visual feedback
+  Events.on(mouseConstraint, 'startdrag', e => {
+    const wb = wordBodies.find(w => w.body === e.body);
+    if (wb) wb.elem.classList.add('dragging');
+  });
+  Events.on(mouseConstraint, 'enddrag', e => {
+    const wb = wordBodies.find(w => w.body === e.body);
+    if (wb) wb.elem.classList.remove('dragging');
+  });
+
+  World.add(engine.world, [...walls, mouseConstraint, ...wordBodies.map(w => w.body)]);
+
+  // Click detection (separate from Matter.js drag)
+  container.addEventListener('pointerdown', onPointerDown);
+  container.addEventListener('pointermove', onPointerMove);
+  container.addEventListener('pointerup', onPointerUp);
+
+  // Animation loop
+  function loop() {
+    Engine.update(engine, 16.67);
+    wordBodies.forEach(({ body, elem }) => {
+      elem.style.left = `${body.position.x}px`;
+      elem.style.top = `${body.position.y}px`;
+      elem.style.transform = `translate(-50%, -50%) rotate(${body.angle}rad)`;
+    });
+    animFrameId = requestAnimationFrame(loop);
+  }
+  animFrameId = requestAnimationFrame(loop);
+}
+
+// ─── Pointer handlers for click vs drag ─────────────────────────────────────
+function onPointerDown(e) {
+  const r = container.getBoundingClientRect();
+  dragStart = { x: e.clientX - r.left, y: e.clientY - r.top };
+  wasDragged = false;
+}
+function onPointerMove(e) {
+  if (!dragStart) return;
+  const r = container.getBoundingClientRect();
+  const dx = (e.clientX - r.left) - dragStart.x;
+  const dy = (e.clientY - r.top) - dragStart.y;
+  if (dx * dx + dy * dy > 36) wasDragged = true;
+}
+function onPointerUp(e) {
+  if (!wasDragged && dragStart && engine) {
+    const r = container.getBoundingClientRect();
+    const pos = { x: e.clientX - r.left, y: e.clientY - r.top };
+    const hit = Matter.Query.point(wordBodies.map(w => w.body), pos);
+    if (hit.length > 0) {
+      const wb = wordBodies.find(w => w.body === hit[0]);
+      if (wb) {
+        wb.elem.classList.add('flash');
+        setTimeout(() => wb.elem.classList.remove('flash'), 250);
+        searchGoogle(wb.keyword);
+      }
+    }
+  }
+  dragStart = null;
+}
+
+// ─── Load & launch keywords ────────────────────────────────────────────────
+async function loadKeywords(region) {
+  // Try real data first
+  try {
+    const resp = await fetch(`data/trends.json?t=${Date.now()}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.success && data.keywords && data.keywords.length > 0) {
+        return data.keywords.map(k => k.keyword);
+      }
+    }
+  } catch (e) { /* fall through */ }
+
+  return REGIONAL_TRENDS[region] || REGIONAL_TRENDS.united_states;
+}
+
+async function launchKeywords(region, showToastMsg = true) {
+  currentRegion = region;
+
+  // Cleanup
+  container.removeEventListener('pointerdown', onPointerDown);
+  container.removeEventListener('pointermove', onPointerMove);
+  container.removeEventListener('pointerup', onPointerUp);
+  destroyPhysics();
+
+  // Clear container (keep watermark + corner info)
+  const watermark = container.querySelector('.watermark');
+  const cornerInfo = container.querySelector('.corner-info');
+  const loadingMsg = container.querySelector('.loading-msg');
+  container.innerHTML = '';
+  if (watermark) container.appendChild(watermark);
+  if (cornerInfo) container.appendChild(cornerInfo);
+  if (loadingMsg) { loadingMsg.style.display = 'grid'; container.appendChild(loadingMsg); }
+
+  // Fetch keywords
+  const keywords = await loadKeywords(region);
+
+  // Hide loading
+  const lm = container.querySelector('.loading-msg');
+  if (lm) lm.style.display = 'none';
+
+  // Update UI
+  document.getElementById('keyword-count').textContent = `${keywords.length} keywords`;
+  document.getElementById('status-text').textContent = `Live • ${REGION_LABELS[region]}`;
+  const ci = container.querySelector('.corner-info');
+  if (ci) ci.textContent = `${keywords.length} keywords · ${REGION_LABELS[region]}`;
+
+  // Create pills in flow layout
+  container.classList.add('flow-layout');
+  const pills = keywords.map((kw, i) => {
+    const badge = BADGE_TYPES[i % BADGE_TYPES.length];
+    const pill = createPillElement(kw, i + 1, badge);
+    container.appendChild(pill);
+    return pill;
+  });
+
+  // Wait for flow layout to settle, then measure and switch to physics
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  // Extra small wait for pill animations to show
+  await new Promise(r => setTimeout(r, 700));
+
+  // Measure positions
+  const containerRect = container.getBoundingClientRect();
+  const measurements = pills.map(pill => {
+    const r = pill.getBoundingClientRect();
+    return {
+      x: r.left - containerRect.left + r.width / 2,
+      y: r.top - containerRect.top + r.height / 2,
+      w: r.width,
+      h: r.height
+    };
+  });
+
+  // Switch to absolute positioning
+  container.classList.remove('flow-layout');
+  pills.forEach((pill, i) => {
+    pill.style.position = 'absolute';
+    pill.style.left = `${measurements[i].x}px`;
+    pill.style.top = `${measurements[i].y}px`;
+    pill.style.transform = 'translate(-50%, -50%)';
+    pill.style.opacity = '1';
+    pill.style.animation = 'none';
+  });
+
+  // Container shake effect
+  container.classList.add('shake-anim');
+  setTimeout(() => container.classList.remove('shake-anim'), 400);
+
+  // Start physics
+  initPhysics(pills, measurements);
+
+  if (showToastMsg) showToast('🎲 Keywords unleashed!');
+}
+
+// ─── Actions ────────────────────────────────────────────────────────────────
+function shake() {
+  if (!wordBodies.length) return;
+  wordBodies.forEach(wb => {
+    Matter.Body.setVelocity(wb.body, {
+      x: (Math.random() - 0.5) * 25,
+      y: -(Math.random() * 18 + 5)
+    });
+    Matter.Body.setAngularVelocity(wb.body, (Math.random() - 0.5) * 0.15);
+  });
+  container.classList.add('shake-anim');
+  setTimeout(() => container.classList.remove('shake-anim'), 400);
+  showToast('🎲 Shake it up!');
+}
+
+function toggleGravity() {
+  if (!engine) return;
+  isZeroGravity = !isZeroGravity;
+  engine.world.gravity.y = isZeroGravity ? 0 : 0.56;
+
+  const btn = document.getElementById('gravity-btn');
+  btn.classList.toggle('active', isZeroGravity);
+  btn.innerHTML = isZeroGravity ? '🚀 Zero-G' : '🌍 Gravity';
+
+  if (isZeroGravity) {
+    wordBodies.forEach(wb => {
+      Matter.Body.setVelocity(wb.body, {
+        x: (Math.random() - 0.5) * 4,
+        y: (Math.random() - 0.5) * 4
+      });
+    });
+    showToast('🚀 Zero gravity activated!');
+  } else {
+    showToast('🌍 Gravity restored');
+  }
+}
+
+function refresh() {
+  isZeroGravity = false;
+  const btn = document.getElementById('gravity-btn');
+  btn.classList.remove('active');
+  btn.innerHTML = '🌍 Gravity';
+  launchKeywords(currentRegion);
+}
+
+// ─── Event listeners ────────────────────────────────────────────────────────
+document.getElementById('shake-btn').addEventListener('click', shake);
+document.getElementById('gravity-btn').addEventListener('click', toggleGravity);
+document.getElementById('refresh-btn').addEventListener('click', refresh);
+
+document.getElementById('region-select').addEventListener('change', e => {
+  isZeroGravity = false;
+  const btn = document.getElementById('gravity-btn');
+  btn.classList.remove('active');
+  btn.innerHTML = '🌍 Gravity';
+  launchKeywords(e.target.value);
+});
+
+// Resize handler (debounced rebuild)
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (wordBodies.length) launchKeywords(currentRegion, false);
+  }, 400);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 's' && !e.metaKey && !e.ctrlKey) shake();
+  if (e.key === 'g' && !e.metaKey && !e.ctrlKey) toggleGravity();
+  if (e.key === 'r' && !e.metaKey && !e.ctrlKey) refresh();
+});
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+launchKeywords('united_states');
+</script>
+
+</body>
+</html>
